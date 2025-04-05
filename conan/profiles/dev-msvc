@@ -1,0 +1,17 @@
+
+[settings]
+os=Windows
+arch=x86_64
+compiler=msvc
+compiler.cppstd=23
+compiler.runtime=dynamic
+compiler.version=194
+build_type=Release
+
+[tool_requires]
+cmake/4.0.0-rc4
+ninja/1.12.1
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja
+tools.env.virtualenv:powershell=pswh
