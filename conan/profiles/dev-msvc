@@ -1,11 +1,10 @@
-
 [settings]
 os=Windows
 arch=x86_64
 compiler=msvc
+compiler.version=194
 compiler.cppstd=23
 compiler.runtime=dynamic
-compiler.version=194
 build_type=Release
 
 [tool_requires]
@@ -14,4 +13,10 @@ ninja/1.12.1
 
 [conf]
 tools.cmake.cmaketoolchain:generator=Ninja
-tools.env.virtualenv:powershell=pswh
+tools.env.virtualenv:powershell=powershell.exe
+
+[buildenv]
+CMAKE_PREFIX_PATH=+(path)C:\Qt\6.7.3\msvc2022_64\lib\cmake
+
+[runenv]
+PATH=+(path)C:\Qt\6.7.3\msvc2022_64\bin
