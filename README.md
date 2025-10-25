@@ -8,11 +8,11 @@
 
 ## ✨ Features
 
-- ⏱️ **Compile-time-safe arithmetic** for 8/16/32-bit operations  
-- 🎹 **MIDI 1.0 input/output** via Win32 API  
-- 🎛️ Custom **bit-accurate audio translation layer**  
-- 🧪 Designed for **learning**, **experimentation**, and **bit-level sound design**  
-- 🔌 Synth connector for **external 8-bit-style hardware** or emulated devices  
+- ⏱️ **Compile-time-safe arithmetic** for 8/16/32-bit operations
+- 🎹 **MIDI 1.0 input/output** via Win32 API
+- 🎛️ Custom **bit-accurate audio translation layer**
+- 🧪 Designed for **learning**, **experimentation**, and **bit-level sound design**
+- 🔌 Synth connector for **external 8-bit-style hardware** or emulated devices
 - ⚙️ Built with modern C++ (constexpr, templates, zero-allocation where possible)
 
 ---
