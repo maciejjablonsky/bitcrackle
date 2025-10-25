@@ -16,10 +16,10 @@ repos:
       - id: forbid-submodules
       - id: fix-byte-order-marker
 
-#  - repo: https://github.com/cheshirekow/cmake-format-precommit
-#    rev: v0.6.13
-#    hooks:
-#      - id: cmake-lint
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-lint
 
   - repo: https://github.com/pocc/pre-commit-hooks
     rev: v1.3.5
