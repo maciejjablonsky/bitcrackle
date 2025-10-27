@@ -426,11 +426,33 @@ class qnumber
         // return argument_as_q.raw() == raw();
     }
 
-    template <qformatted SaturateIntoT, qformatted ArgT>
-    [[nodiscard]] constexpr SaturateIntoT saturate_mul(
-        ArgT multiplicant) const noexcept
+    template <qformatted ArgT>
+    [[nodiscard]] constexpr auto accurate_multiply(ArgT argument) const noexcept
     {
-        // need implementation
+        constexpr size_t result_integer_bits =
+            integer_bits + ArgT::integer_bits;
+        constexpr size_t result_fraction_bits =
+            fraction_bits + ArgT::fraction_bits;
+        using result_value_type =
+            value_type_for<result_integer_bits,
+                           result_fraction_bits,
+                           is_signed or ArgT::is_signed>::type;
+        using type   = qnumber<result_integer_bits,
+                               result_fraction_bits,
+                               result_value_type>;
+        auto lhs_raw = static_cast<result_value_type>(raw());
+        auto rhs_raw = static_cast<result_value_type>(argument.raw());
+        auto result  = static_cast<result_value_type>(lhs_raw * rhs_raw);
+        return type{as_is_t{result}};
+    }
+
+    template <qformatted SaturateIntoT, qformatted ArgT>
+    [[nodiscard]] constexpr SaturateIntoT saturate_multiply(
+        ArgT multiplicant) const noexcept
+        requires(SaturateIntoT::is_signed == is_signed or ArgT::is_signed)
+    {
+        auto result = this->accurate_multiply(multiplicant);
+        return result.template narrow_as<SaturateIntoT>();
     }
 };
 
