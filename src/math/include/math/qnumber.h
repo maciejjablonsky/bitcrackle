@@ -348,6 +348,16 @@ class qnumber
         return {as_is_t{static_cast<typename ToT::value_type>(saturated)}};
     }
 
+    template <size_t NewFractionBits>
+    constexpr auto with_fraction_bits() const noexcept
+    {
+        using new_value_type = typename value_type_for<integer_bits,
+                                                       NewFractionBits,
+                                                       is_signed>::type;
+        return this->template as<
+            qnumber<integer_bits, NewFractionBits, new_value_type>>();
+    }
+
     [[nodiscard]] constexpr T raw() const noexcept
     {
         return value_;
@@ -452,6 +462,50 @@ class qnumber
         requires(SaturateIntoT::is_signed == is_signed or ArgT::is_signed)
     {
         auto result = this->accurate_multiply(multiplicant);
+        return result.template narrow_as<SaturateIntoT>();
+    }
+
+    template <qformatted ArgT>
+    [[nodiscard]] constexpr auto accurate_divide(ArgT argument) const noexcept
+    {
+        [[maybe_unused]] constexpr size_t prescaled_integer_bits = integer_bits;
+        [[maybe_unused]] constexpr size_t prescaled_fraction_bits =
+            fraction_bits + ArgT::bits;
+        using prescaled_type = qnumber<
+            prescaled_integer_bits,
+            prescaled_fraction_bits,
+            typename value_type_for<prescaled_integer_bits,
+                                    prescaled_fraction_bits,
+                                    is_signed or ArgT::is_signed>::type>;
+
+        auto prescaled_lhs = as<prescaled_type>();
+        auto lhs_raw       = prescaled_lhs.raw();
+        auto rhs_raw =
+            static_cast<typename decltype(prescaled_lhs)::value_type>(
+                argument.raw());
+
+        constexpr size_t result_integer_bits =
+            integer_bits + ArgT::fraction_bits;
+        constexpr size_t result_fraction_bits =
+            fraction_bits + ArgT::integer_bits;
+        using result_value_type =
+            typename value_type_for<result_integer_bits,
+                                    result_fraction_bits,
+                                    is_signed or ArgT::is_signed>::type;
+        auto result = static_cast<result_value_type>(lhs_raw / rhs_raw);
+
+        using type = qnumber<result_integer_bits,
+                             result_fraction_bits,
+                             result_value_type>;
+        return type{as_is_t{result}};
+    }
+
+    template <qformatted SaturateIntoT, qformatted ArgT>
+    [[nodiscard]] constexpr SaturateIntoT saturate_divide(
+        ArgT argument) const noexcept
+        requires(SaturateIntoT::is_signed == is_signed or ArgT::is_signed)
+    {
+        auto result = this->accurate_divide(argument);
         return result.template narrow_as<SaturateIntoT>();
     }
 };

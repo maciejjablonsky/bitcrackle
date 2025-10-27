@@ -9,6 +9,6 @@ endif()
 
 target_sources(
     bitcrackle_math_test
-    PRIVATE statistics_test.cpp add_test.cpp subtract_test.cpp multiply_test.cpp
+    PRIVATE statistics_test.cpp add_test.cpp subtract_test.cpp multiply_test.cpp divide_test.cpp
 )
 target_link_libraries(bitcrackle_math_test PRIVATE bit::math)
