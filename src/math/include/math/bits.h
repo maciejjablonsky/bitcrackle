@@ -137,10 +137,12 @@ template <size_t MSBitIndex, size_t LSBitIndex, std::integral T>
 [[nodiscard]] constexpr std::unsigned_integral auto extract_bits(
     T value) noexcept
 {
-    auto unsigned_value = std::bit_cast<std::make_unsigned_t<T>>(value);
-    constexpr auto mask = generate_bitmask<MSBitIndex, LSBitIndex, T>();
-    unsigned_value      = unsigned_value & mask;
-    unsigned_value      = unsigned_value >> (LSBitIndex);
+    using unsigned_value_type = std::make_unsigned_t<T>;
+    auto unsigned_value       = std::bit_cast<unsigned_value_type>(value);
+    constexpr auto mask       = generate_bitmask<MSBitIndex, LSBitIndex, T>();
+    unsigned_value = static_cast<unsigned_value_type>(unsigned_value & mask);
+    unsigned_value =
+        static_cast<unsigned_value_type>(unsigned_value >> (LSBitIndex));
     return unsigned_value;
 }
 
