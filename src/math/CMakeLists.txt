@@ -11,15 +11,14 @@ target_sources(
         include/math/statistics.h
 )
 
-target_include_directories(
-    bitcrackle_math
-    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+target_include_directories(bitcrackle_math INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_features(bitcrackle_math INTERFACE cxx_std_23)
 target_compile_options(
     bitcrackle_math
-    INTERFACE /Wall /WX /permissive- /Zc:preprocessor /analyze
+    INTERFACE /Wall /permissive- /Zc:preprocessor /analyze /wd5045
+    #        INTERFACE
+    #        /WX
 )
 
 find_package(mp-units REQUIRED)

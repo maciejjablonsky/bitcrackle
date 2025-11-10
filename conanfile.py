@@ -20,11 +20,16 @@ class BitcrackleRecipe(ConanFile):
     def requirements(self):
         self.requires('fmt/11.1.4')
         self.requires('boost/1.87.0')
+        self.requires('catch2/3.8.1')
+        self.requires('mp-units/2.4.0')
+        self.requires('gcem/1.18.0')
+        # self.requires('qt/6.8.3')
 
     def generate(self):
         deps = CMakeDeps(self)
         deps.generate()
         tc = CMakeToolchain(self)
+        tc.variables["CMAKE_EXPORT_COMPILE_COMMANDS"] = True
         tc.generate()
 
     def build(self):

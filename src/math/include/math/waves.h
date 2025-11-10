@@ -7,6 +7,7 @@
 #include <numbers>
 #include <ranges>
 #include <stdexcept>
+#include <type_traits>
 
 #pragma warning(push)
 #pragma warning(disable : 5045)
@@ -206,6 +207,9 @@ template <size_t N> constexpr auto compute_K() noexcept -> double
 template <qformatted T, size_t N>
 constexpr auto compute_theta_table() noexcept -> std::array<T, N>
 {
+    // atan2 has range from [-pi;+pi] -> 2 bits for integer, remaining bits may
+    // be a fraction using value_type = qnumber<2, T::bits - 2, typename
+    // T::value_type>;
     std::array<T, N> theta_table;
     for (auto i : loop_i(N))
     {
@@ -225,12 +229,20 @@ constexpr WidestT sine_bounded(ArgT radians) noexcept
     constexpr qu<0, WidestT::bits> K{compute_K<iterations>()};
     constexpr auto theta_table = compute_theta_table<WidestT, iterations>();
 
-    WidestT angle = radians.template as<WidestT>();
+    WidestT angle = [radians] {
+        if constexpr (bit::safely_convertible<decltype(radians), WidestT>)
+        {
+            return radians.as<WidestT>();
+        }
+        else
+            return radians.narrow_as<WidestT>();
+    }();
+    // ArgT angle = radians;
     WidestT theta{};
     WidestT x{1.0};
     WidestT y{0.0};
     constexpr qs<1, 0> one{1.0};
-    qu<1, WidestT::bits - 1> P2i{1.0};
+    qnumber<1, WidestT::bits - 1, typename WidestT::value_type> P2i{1.0};
     for (qformatted auto arc_tanget : theta_table)
     {
         const auto sigma = theta < angle ? one : -one;
@@ -242,7 +254,8 @@ constexpr WidestT sine_bounded(ArgT radians) noexcept
             y.saturate_multiply<WidestT>(sigma_times_P2i));
         y = y.saturate_add<WidestT>(
             x.saturate_multiply<WidestT>(sigma_times_P2i));
-        P2i = as_is_t{P2i.raw() >> 1};
+        P2i =
+            as_is_t{static_cast<typename WidestT::value_type>(P2i.raw() >> 1)};
     }
     return y.saturate_multiply<WidestT>(K);
 }
@@ -282,21 +295,43 @@ constexpr WidestT sine(ArgT radians) noexcept
 }
 } // namespace cordic
 
-// template<qformatted ReturnT> [[nodiscard]] constexpr ReturnT
-// saturated_sine(qformatted auto radians) noexcept
-// {
-//     auto first = radians;
-//
-//     auto arg_to_3 = radians.accurate_mul(radians).accurate_mul(radians);
-//     constexpr auto factorial_3 = qnumber_factorial<3u>();
-//     auto second =  arg_to_3.accurate_div(factorial_3);
-//
-//
-//     auto result = first.template narrow_as<ReturnT>() - second.template
-//     narrow_as<ReturnT>();;
-//     // return result.template narrow_as<ReturnT>();
-//     return result;
-// }
+template <typename FuncT> class oscilator
+{
+  public:
+    using value_type = std::invoke_result_t<FuncT, uint64_t>;
 
-// constexpr auto sine_of_pi = accurate_sine(qu<2, 3>{3.14159265359});
+  private:
+    FuncT _generator{};
+    const float _wave_frequency{};
+    const uint32_t _sampling_frequency{};
+    int64_t _sample_index{};
+
+  public:
+    oscilator(FuncT generator,
+              float wave_frequency,
+              uint32_t sampling_frequency)
+        : _generator(generator), _wave_frequency(wave_frequency),
+          _sampling_frequency(sampling_frequency),
+          _sample_index(-_wave_frequency)
+    {
+        assert(0 != _wave_frequency);
+        assert(0 != _sampling_frequency);
+    }
+
+    value_type next() noexcept
+    {
+        _sample_index = std::round(_sample_index + _wave_frequency);
+        _sample_index %= _sampling_frequency;
+
+        auto phase = 2 * std::numbers::pi *
+                     (static_cast<double>(_sample_index) / _sampling_frequency);
+        return _generator(phase);
+    }
+
+    void next(std::span<value_type> buffer) noexcept
+    {
+        std::ranges::for_each(buffer, [this](auto& value) { value = next(); });
+    }
+};
+
 } // namespace bit

@@ -1,5 +1,6 @@
 #add_subdirectory(peep)
 add_subdirectory(math)
+add_subdirectory(wave)
 
 #find_package(fmt REQUIRED)
 #find_package(boost REQUIRED)
