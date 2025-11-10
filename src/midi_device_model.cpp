@@ -1,18 +1,18 @@
 #include "midi_device_model.h"
 #include <windows.h>
 
-midi_device_model::midi_device_model(QObject *parent)
+midi_device_model::midi_device_model(QObject* parent)
     : QAbstractListModel(parent)
 {
     refresh_devices();
 }
 
-int midi_device_model::rowCount(const QModelIndex & /*parent*/) const
+int midi_device_model::rowCount(const QModelIndex& /*parent*/) const
 {
     return devices_.size();
 }
 
-QVariant midi_device_model::data(const QModelIndex &index, int role) const
+QVariant midi_device_model::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() >= devices_.size())
         return {};
@@ -25,9 +25,7 @@ QVariant midi_device_model::data(const QModelIndex &index, int role) const
 
 QHash<int, QByteArray> midi_device_model::roleNames() const
 {
-    return {
-        { device_name_role, "deviceName" }
-    };
+    return {{device_name_role, "deviceName"}};
 }
 
 QStringList midi_device_model::probe_devices()
@@ -72,11 +70,10 @@ void midi_device_model::refresh_devices()
                 current_device_.clear(); // no devices available
             }
         }
-        
-		emit current_device_changed();
+
+        emit current_device_changed();
     }
 }
-
 
 void midi_device_model::set_current_device(const QString& device)
 {

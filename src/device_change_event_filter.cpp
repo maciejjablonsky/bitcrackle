@@ -3,7 +3,7 @@
 #include <dbt.h>
 #include <QDebug>
 
-device_change_event_filter::device_change_event_filter(midi_device_model *model)
+device_change_event_filter::device_change_event_filter(midi_device_model* model)
     : device_model_(model)
 {
 }
@@ -11,14 +11,11 @@ device_change_event_filter::device_change_event_filter(midi_device_model *model)
 void device_change_event_filter::register_device_notifications(HWND hwnd)
 {
     DEV_BROADCAST_DEVICEINTERFACE notification_filter = {};
-    notification_filter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
+    notification_filter.dbcc_size       = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
     notification_filter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
 
     device_notify_handle_ = RegisterDeviceNotification(
-        hwnd,
-        &notification_filter,
-        DEVICE_NOTIFY_WINDOW_HANDLE
-    );
+        hwnd, &notification_filter, DEVICE_NOTIFY_WINDOW_HANDLE);
 
     if (!device_notify_handle_)
     {
@@ -26,12 +23,14 @@ void device_change_event_filter::register_device_notifications(HWND hwnd)
     }
 }
 
-bool device_change_event_filter::nativeEventFilter(const QByteArray &event_type, void *message, qintptr *result)
+bool device_change_event_filter::nativeEventFilter(const QByteArray& event_type,
+                                                   void* message,
+                                                   qintptr* result)
 {
     if (event_type != "windows_generic_MSG")
         return false;
 
-    MSG *msg = static_cast<MSG *>(message);
+    MSG* msg = static_cast<MSG*>(message);
 
     if (msg->message == WM_DEVICECHANGE)
     {

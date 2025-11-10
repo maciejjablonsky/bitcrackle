@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-QtObject { 
+QtObject {
 	readonly property int xs: 2
 	readonly property int s: 4
 	readonly property int m: 8
