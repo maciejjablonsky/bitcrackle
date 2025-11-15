@@ -276,6 +276,21 @@ class qnumber
 
     constexpr auto operator<=>(const qnumber&) const = default;
 
+    [[nodiscard]] constexpr bool is_zero() const noexcept
+    {
+        return std::cmp_equal(value_, 0);
+    }
+
+    [[nodiscard]] constexpr bool is_positive() const noexcept
+    {
+        return std::cmp_greater(value_, 0);
+    }
+
+    [[nodiscard]] constexpr bool is_negative() const noexcept
+    {
+        return std::cmp_less(value_, 0);
+    }
+
     // TODO: probably kind of copy_sign_bit() between different signed_integral
     // types is needed and copying numeric bits separately constexpr explicit
     // qnumber(std::signed_integral auto value) requires is_signed :
@@ -510,7 +525,7 @@ class qnumber
         return result_type{as_is_t{result}};
     }
 
-    template <qformatted SaturateIntoT, qformatted ArgT>
+    template <qformatted SaturateIntoT = qnumber, qformatted ArgT>
     [[nodiscard]] constexpr SaturateIntoT saturate_divide(
         ArgT argument) const noexcept
         requires(SaturateIntoT::is_signed == is_signed or ArgT::is_signed)

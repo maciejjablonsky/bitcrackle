@@ -2,8 +2,10 @@
 
 #include "math/qnumber.h"
 #include "math/utilities.h"
+
 #include <array>
 #include <bit>
+#include <concepts>
 #include <numbers>
 #include <ranges>
 #include <stdexcept>
@@ -193,75 +195,91 @@ namespace cordic
 {
 template <size_t N> constexpr auto compute_K() noexcept -> double
 {
-    double K = 1.0;
-    for (auto i : loop_i(N))
+    double denominator = 1.0;
+    for (auto k : loop_i(N))
     {
-        auto power       = gcem::pow(2.0, -2.0 * i);
-        auto sqrt        = gcem::sqrt(1.0 + power);
-        auto coefficient = 1.0 / sqrt;
-        K *= coefficient;
+        auto power = gcem::pow(2.0, -2.0 * k);
+        denominator *= (1.0 + power);
     }
-    return K;
+    return 1.0 / gcem::sqrt(denominator);
 }
 
-template <qformatted T, size_t N>
-constexpr auto compute_theta_table() noexcept -> std::array<T, N>
+template <qformatted T, size_t N> constexpr auto compute_theta() noexcept
 {
-    // atan2 has range from [-pi;+pi] -> 2 bits for integer, remaining bits may
-    // be a fraction using value_type = qnumber<2, T::bits - 2, typename
-    // T::value_type>;
-    std::array<T, N> theta_table;
-    for (auto i : loop_i(N))
-    {
-        theta_table[i] = gcem::atan2(1.0, gcem::pow(2.0, i));
-    }
-    return theta_table;
+    auto arctan = gcem::atan(1.0 / (1 << N));
+    return T{arctan};
 }
 
-template <qformatted WidestT, qformatted ArgT>
-constexpr WidestT sine_bounded(ArgT radians) noexcept
+template <size_t IterationIndex,
+          size_t IterationSteps,
+          qformatted XT,
+          qformatted YT,
+          qformatted AngleT>
+auto sine_bounded_iteration_step(XT x, YT y, AngleT angle) noexcept
+{
+    constexpr auto theta = compute_theta<AngleT, IterationIndex>();
+    auto x_modifier      = YT{as_is_t{
+        static_cast<typename YT::value_type>(y.raw() >> IterationIndex)}};
+    auto y_modifier      = XT{as_is_t{
+        static_cast<typename XT::value_type>(x.raw() >> IterationIndex)}};
+    if (angle.is_positive())
+    {
+        x     = x.saturate_subtract(x_modifier);
+        y     = y.saturate_add(y_modifier);
+        angle = angle.saturate_subtract(theta);
+    }
+    else
+    {
+        x     = x.saturate_add(x_modifier);
+        y     = y.saturate_subtract(y_modifier);
+        angle = angle.saturate_add(theta);
+    }
+
+    if constexpr (IterationIndex < IterationSteps)
+    {
+        return sine_bounded_iteration_step<IterationIndex + 1, IterationSteps>(
+            x, y, angle);
+    }
+    else
+    {
+        return y;
+    }
+}
+
+template <size_t MaxBits, qformatted ArgT>
+    requires(MaxBits > 0u)
+constexpr qs<1, MaxBits - 1> sine_bounded(ArgT radians) noexcept
 {
     constexpr ArgT minus_half_pi{-90 * std::numbers::pi / 180};
     constexpr ArgT plus_half_pi{90 * std::numbers::pi / 180};
     assert(minus_half_pi <= radians && radians <= plus_half_pi);
 
-    constexpr size_t iterations = 16;
-    constexpr qu<0, WidestT::bits> K{compute_K<iterations>()};
-    constexpr auto theta_table = compute_theta_table<WidestT, iterations>();
+    constexpr size_t iterations = MaxBits;
+    constexpr qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2> K{
+        compute_K<iterations>()};
 
-    WidestT angle = [radians] {
-        if constexpr (bit::safely_convertible<decltype(radians), WidestT>)
+    auto angle = [radians] {
+        if constexpr (bit::safely_convertible<
+                          decltype(radians),
+                          qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>)
         {
-            return radians.as<WidestT>();
+            return radians.as<qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>();
         }
         else
-            return radians.narrow_as<WidestT>();
+            return radians
+                .narrow_as<qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>();
     }();
-    // ArgT angle = radians;
-    WidestT theta{};
-    WidestT x{1.0};
-    WidestT y{0.0};
-    constexpr qs<1, 0> one{1.0};
-    qnumber<1, WidestT::bits - 1, typename WidestT::value_type> P2i{1.0};
-    for (qformatted auto arc_tanget : theta_table)
-    {
-        const auto sigma = theta < angle ? one : -one;
-        const auto sigma_times_arc_tangent =
-            sigma.saturate_multiply<WidestT>(arc_tanget);
-        theta = theta.saturate_add(sigma_times_arc_tangent);
-        const auto sigma_times_P2i = sigma.saturate_multiply<WidestT>(P2i);
-        x                          = x.saturate_subtract<WidestT>(
-            y.saturate_multiply<WidestT>(sigma_times_P2i));
-        y = y.saturate_add<WidestT>(
-            x.saturate_multiply<WidestT>(sigma_times_P2i));
-        P2i =
-            as_is_t{static_cast<typename WidestT::value_type>(P2i.raw() >> 1)};
-    }
-    return y.saturate_multiply<WidestT>(K);
+    constexpr qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2> one{1.f};
+    auto x            = K;
+    auto y            = qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>{0.f};
+    auto sine         = sine_bounded_iteration_step<0, iterations>(x, y, angle);
+    auto sine_reduced = sine.narrow_as<qs<1, decltype(sine)::fraction_bits>>();
+    return sine_reduced.as<qs<1, MaxBits - 1>>();
 }
 
-template <qformatted WidestT, qformatted ArgT>
-constexpr WidestT sine(ArgT radians) noexcept
+template <size_t MaxBits, qformatted ArgT>
+    requires(MaxBits > 0u)
+constexpr qs<1, MaxBits - 1> sine(ArgT radians) noexcept
 {
     constexpr ArgT minus_pi{-std::numbers::pi};
     constexpr ArgT minus_two_pi{-2 * std::numbers::pi};
@@ -291,7 +309,7 @@ constexpr WidestT sine(ArgT radians) noexcept
         radians = minus_pi.saturate_subtract(radians);
     }
 
-    return sine_bounded<WidestT>(radians);
+    return sine_bounded<MaxBits>(radians);
 }
 } // namespace cordic
 
@@ -328,9 +346,10 @@ template <typename FuncT> class oscilator
         return _generator(phase);
     }
 
-    void next(std::span<value_type> buffer) noexcept
+    template <std::ranges::forward_range RangeT>
+    void next(RangeT&& range) noexcept
     {
-        std::ranges::for_each(buffer, [this](auto& value) { value = next(); });
+        std::ranges::for_each(range, [this](auto& value) { value = next(); });
     }
 };
 
