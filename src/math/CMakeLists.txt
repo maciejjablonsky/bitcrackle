@@ -16,13 +16,10 @@ target_include_directories(bitcrackle_math INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 target_compile_features(bitcrackle_math INTERFACE cxx_std_23)
 target_compile_options(
     bitcrackle_math
-    INTERFACE /Wall /permissive- /Zc:preprocessor /analyze /wd5045
-    #        INTERFACE
-    #        /WX
+    INTERFACE $<$<PLATFORM_ID:Windows>:/Wall /permissive- /Zc:preprocessor /analyze /wd5045>
 )
 
-find_package(mp-units REQUIRED)
 find_package(gcem REQUIRED)
-target_link_libraries(bitcrackle_math INTERFACE mp-units::mp-units gcem)
+target_link_libraries(bitcrackle_math INTERFACE gcem)
 
 add_subdirectory(tests)

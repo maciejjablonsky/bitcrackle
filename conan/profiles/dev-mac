@@ -1,0 +1,8 @@
+include(default)
+include(bitcrackle_tool_requires)
+
+[settings]
+compiler.cppstd=23
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja

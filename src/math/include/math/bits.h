@@ -51,21 +51,21 @@ concept contains_bit_range =
     MSBitIndex >= LSBitIndex and contains_bit<T>(MSBitIndex) and
     contains_bit<T>(LSBitIndex);
 
+// helper overload to shift indices up by LSBitIndex
+template <typename T, size_t... Offsets>
+[[nodiscard]] constexpr T generate_bitmask_from_sequence(
+    std::index_sequence<Offsets...>, size_t Base) noexcept
+{
+    return as<T>(((as<T>(1) << (Base + Offsets)) | ...));
+}
+
 template <size_t MSBitIndex, size_t LSBitIndex, std::integral T>
     requires contains_bit_range<T, MSBitIndex, LSBitIndex>
 [[nodiscard]] constexpr T generate_bitmask() noexcept
 {
     constexpr size_t NumBits = MSBitIndex - LSBitIndex + 1;
-    return GenerateBitMaskFromSequence<T>(std::make_index_sequence<NumBits>{},
-                                          LSBitIndex);
-}
-
-// helper overload to shift indices up by LSBitIndex
-template <typename T, size_t... Offsets>
-[[nodiscard]] constexpr T GenerateBitMaskFromSequence(
-    std::index_sequence<Offsets...>, size_t Base) noexcept
-{
-    return as<T>(((as<T>(1) << (Base + Offsets)) | ...));
+    return generate_bitmask_from_sequence<T>(
+        std::make_index_sequence<NumBits>{}, LSBitIndex);
 }
 
 static_assert(generate_bitmask<3, 0, uint8_t>() == 0b0000'1111);

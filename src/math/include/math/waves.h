@@ -183,8 +183,9 @@ template <qformatted ArgT> constexpr auto saturated_sine(ArgT radians) noexcept
     // auto fifth = arg_to_9.accurate_div(factorial_9);
 
     using widest_qnumber = std::remove_cvref_t<decltype(third)>;
-    auto result = first.as<widest_qnumber>() - second.as<widest_qnumber>() +
-                  third.as<widest_qnumber>();
+    auto result          = first.template as<widest_qnumber>() -
+                  second.template as<widest_qnumber>() +
+                  third.template as<widest_qnumber>();
     // - fourth.as<widest_qnumber>();
 
     return result;
@@ -248,7 +249,7 @@ auto sine_bounded_iteration_step(XT x, YT y, AngleT angle) noexcept
 
 template <size_t MaxBits, qformatted ArgT>
     requires(MaxBits > 0u)
-constexpr qs<1, MaxBits - 1> sine_bounded(ArgT radians) noexcept
+constexpr auto sine_bounded(ArgT radians) noexcept
 {
     constexpr ArgT minus_half_pi{-90 * std::numbers::pi / 180};
     constexpr ArgT plus_half_pi{90 * std::numbers::pi / 180};
@@ -263,23 +264,26 @@ constexpr qs<1, MaxBits - 1> sine_bounded(ArgT radians) noexcept
                           decltype(radians),
                           qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>)
         {
-            return radians.as<qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>();
+            return radians
+                .template as<qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>();
         }
         else
-            return radians
-                .narrow_as<qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>();
+            return radians.template narrow_as<
+                qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>>();
     }();
     constexpr qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2> one{1.f};
-    auto x            = K;
-    auto y            = qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>{0.f};
-    auto sine         = sine_bounded_iteration_step<0, iterations>(x, y, angle);
-    auto sine_reduced = sine.narrow_as<qs<1, decltype(sine)::fraction_bits>>();
-    return sine_reduced.as<qs<1, MaxBits - 1>>();
+    auto x    = K;
+    auto y    = qs<MaxBits / 2, MaxBits / 2 + MaxBits % 2>{0.f};
+    auto sine = sine_bounded_iteration_step<0, iterations>(x, y, angle);
+    auto sine_reduced =
+        sine.template narrow_as<qs<1, decltype(sine)::fraction_bits>>();
+    // return sine_reduced.template as<qs<1, MaxBits - 1>>();
+    return sine_reduced;
 }
 
 template <size_t MaxBits, qformatted ArgT>
     requires(MaxBits > 0u)
-constexpr qs<1, MaxBits - 1> sine(ArgT radians) noexcept
+constexpr auto sine(ArgT radians) noexcept
 {
     constexpr ArgT minus_pi{-std::numbers::pi};
     constexpr ArgT minus_two_pi{-2 * std::numbers::pi};

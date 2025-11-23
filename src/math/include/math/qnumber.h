@@ -149,8 +149,8 @@ struct value_type_for<IntegerBits, FractionBits, IsSigned>
 };
 
 template <size_t IntegerBits, size_t FractionBits, bool IsSigned>
-    requires !IsSigned
-             struct value_type_for<IntegerBits, FractionBits, IsSigned>
+    requires(!IsSigned)
+struct value_type_for<IntegerBits, FractionBits, IsSigned>
 {
     using type = minimal_unsigned_type<IntegerBits, FractionBits>;
 };
@@ -239,14 +239,14 @@ class qnumber
     }
 
     constexpr explicit qnumber(std::floating_point auto value)
-        requires not is_signed
+        requires(not is_signed)
     {
         assert(value >= 0);
         value_ = floating_to_fixed_(value);
     }
 
     constexpr qnumber& operator=(std::floating_point auto value)
-        requires not is_signed
+        requires(not is_signed)
     {
         assert(value >= 0);
         value_ = floating_to_fixed_(value);
@@ -254,7 +254,7 @@ class qnumber
     }
 
     constexpr explicit qnumber(std::unsigned_integral auto value)
-        requires not is_signed
+        requires(not is_signed)
     {
         assert(bit::as<size_t>(std::bit_width(value)) <= integer_bits);
         assign_bits<msb, fraction_bits>(value_, value);
@@ -439,10 +439,10 @@ class qnumber
     [[nodiscard]] constexpr bool is_nearest_to(ArgT argument) const noexcept
     {
         [[maybe_unused]] auto this_as_floating = this->as<ArgT>();
-        auto clamped =
-            std::clamp(argument,
-                       std::numeric_limits<qnumber>::lowest().as<ArgT>(),
-                       std::numeric_limits<qnumber>::max().as<ArgT>());
+        auto clamped                           = std::clamp(
+            argument,
+            std::numeric_limits<qnumber>::lowest().template as<ArgT>(),
+            std::numeric_limits<qnumber>::max().template as<ArgT>());
         qnumber argument_as_q{clamped};
 
         if (raw() == std::numeric_limits<value_type>::lowest())

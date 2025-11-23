@@ -58,7 +58,9 @@ template <std::ranges::input_range LeftRangeT,
     using partial_result_t = pearson_correlation_partial_result<T>;
 
     auto partial_results = std::transform_reduce(
+#if not(defined(__clang__) and defined(__apple_build_version__))
         std::execution::unseq,
+#endif
         left.begin(),
         left.end(),
         right.begin(),

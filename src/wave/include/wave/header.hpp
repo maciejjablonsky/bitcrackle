@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <bit>
 #include <cstdint>
+#include <exception>
 #include <iterator>
 #include <numeric>
 #include <ranges>
@@ -15,7 +16,7 @@ constexpr uint32_t tag_to_integer(const std::string_view tag)
 {
     if constexpr (std::endian::native != std::endian::little)
     {
-        throw std::exception("Not supported endiannes.");
+        throw std::runtime_error("Not supported endiannes.");
     }
     auto view = std::views::reverse(tag);
     return std::accumulate(std::begin(view),

@@ -3,8 +3,8 @@ project(bitcrackle CXX)
 
 set(CMAKE_LINK_LIBRARY_ONLY_TARGETS ON)
 
-find_package(Qt6 COMPONENTS Core Gui Qml Quick REQUIRED)
-qt_policy(SET QTP0001 NEW)
+#find_package(Qt6 COMPONENTS Core Gui Qml Quick REQUIRED)
+#qt_policy(SET QTP0001 NEW)
 #set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(src)

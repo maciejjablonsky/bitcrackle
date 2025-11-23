@@ -1,0 +1,2 @@
+[buildenv]
+CMAKE_PREFIX_PATH=+(path)C:\Qt\6.7.3\msvc2022_64\lib\cmake
