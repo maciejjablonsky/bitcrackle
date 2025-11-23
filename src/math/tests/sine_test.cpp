@@ -30,27 +30,35 @@ TEST_CASE("cordic::sine() to std::sin() correlation")
     CHECK(correlation.value() == Catch::Approx(1.f).epsilon(1e-5));
 }
 
-TEST_CASE("cordic::sine() to wav file")
+template<size_t MaxBits>
+void generate_wave()
 {
     auto duration           = 10.f;                 // s
     auto wave_frequency     = 440.f;                // Hz
-    auto period             = 1.f / wave_frequency; // s
     auto sampling_frequency = 44'100u;              // Hz
     auto number_of_samples  = static_cast<int>(duration * sampling_frequency);
     std::vector<int32_t> samples(number_of_samples);
 
     bit::wave::header header{1, sampling_frequency, 32};
     assert(validate_header(header));
-    bit::wave::writer wave_writer{header, "cordic_sine.wav"};
+    bit::wave::writer wave_writer{header, std::format("cordic_sine_{}bit.wav", MaxBits)};
 
     bit::oscilator sine{
         [](float phase) {
             auto phase_qformatted = bit::qs<10, 12>{phase};
-            return bit::cordic::sine<7>(phase_qformatted).raw() * (1 << 24);
+            return bit::cordic::sine<MaxBits>(phase_qformatted).raw() * (1 << (31 - MaxBits));
         },
         wave_frequency,
         sampling_frequency};
 
     sine.next(std::span{samples});
     wave_writer.write(std::span{samples});
+}
+
+TEST_CASE("cordic::sine() to wav file")
+{
+    generate_wave<7>();
+    generate_wave<15>();
+    generate_wave<23>();
+    generate_wave<31>();
 }
