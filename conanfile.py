@@ -1,5 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
+from pathlib import Path
 
 
 class BitcrackleRecipe(ConanFile):
@@ -13,6 +14,7 @@ class BitcrackleRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     exports_sources = "CMakeLists.txt", "src/*", "cmake/*"
+    generators = ("VirtualBuildEnv", "VirtualRunEnv")
 
     def layout(self):
         cmake_layout(self)
@@ -31,6 +33,19 @@ class BitcrackleRecipe(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["CMAKE_EXPORT_COMPILE_COMMANDS"] = True
         tc.generate()
+
+        full_env = {}
+        full_env.update(self.buildenv.vars(self))
+        full_env.update(self.runenv.vars(self))
+
+        env_path = Path(self.build_folder) / "build_and_run.ps1"
+        self.output.info(f"Producing build_and_run.ps1 file at {env_path}.")
+        with open(env_path, "w") as f:
+            for k, v in full_env.items():
+                # Quote values only when needed — simple and safe
+                if " " in v:
+                    v = f'"{v}"'
+                f.write(f"{k}={v}\n")
 
     def build(self):
         cmake = CMake(self)
