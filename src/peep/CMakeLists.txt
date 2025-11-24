@@ -1,5 +1,5 @@
 add_library(bitcrackle_peep STATIC)
-add_library(bit::peep ALIAS bitcrackle_peep)
+add_library(bitcrackle::peep ALIAS bitcrackle_peep)
 
 target_sources(bitcrackle_peep PRIVATE include/peep/peeper.h src/peeper.cpp)
 

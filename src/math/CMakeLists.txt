@@ -1,5 +1,5 @@
 add_library(bitcrackle_math INTERFACE)
-add_library(bit::math ALIAS bitcrackle_math)
+add_library(bitcrackle::math ALIAS bitcrackle_math)
 
 target_sources(
     bitcrackle_math

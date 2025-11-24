@@ -17,4 +17,4 @@ target_sources(
         divide_test.cpp
         sine_test.cpp
 )
-target_link_libraries(bitcrackle_math_test PRIVATE bit::math bit::wave)
+target_link_libraries(bitcrackle_math_test PRIVATE bitcrackle::math bitcrackle::wave)

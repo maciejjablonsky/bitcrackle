@@ -42,7 +42,7 @@ add_subdirectory(wave)
 #        winmm
 #        fmt::fmt
 #        boost::boost
-#        bit::math
+#        bitcrackle::math
 #)
 #
 #target_compile_definitions(bitcrackle PRIVATE UNICODE _UNICODE)
