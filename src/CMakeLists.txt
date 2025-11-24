@@ -1,6 +1,7 @@
 #add_subdirectory(peep)
 add_subdirectory(math)
 add_subdirectory(wave)
+add_subdirectory(audio_engine)
 
 #find_package(fmt REQUIRED)
 #find_package(boost REQUIRED)
