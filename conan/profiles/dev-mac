@@ -1,5 +1,5 @@
 include(default)
-include(bitcrackle_tool_requires)
+include(bitcrackle-tool-requires)
 
 [settings]
 compiler.cppstd=23
